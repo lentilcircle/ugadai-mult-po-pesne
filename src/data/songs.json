@@ -1,0 +1,102 @@
+[
+  {
+    "id": "song-001",
+    "category": "soviet",
+    "cartoon_title": "Антошка",
+    "song_title": "Антошка",
+    "audio_file": "/audio/antoshka.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-002",
+    "category": "soviet",
+    "cartoon_title": "Бременские музыканты",
+    "song_title": "Ничего на свете лучше нету",
+    "audio_file": "/audio/bremenskie_muzikanti.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-003",
+    "category": "soviet",
+    "cartoon_title": "Приключения Буратино",
+    "song_title": "Бу-ра-тино",
+    "audio_file": "/audio/buratino.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-004",
+    "category": "soviet",
+    "cartoon_title": "Приключения поросёнка Фунтика",
+    "song_title": "Песенка Фунтика",
+    "audio_file": "/audio/funtik.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-005",
+    "category": "soviet",
+    "cartoon_title": "Катерок",
+    "song_title": "Чунга-Чанга",
+    "audio_file": "/audio/katerok.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-006",
+    "category": "soviet",
+    "cartoon_title": "Крошка Енот",
+    "song_title": "От улыбки",
+    "audio_file": "/audio/kroshka_enot.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-007",
+    "category": "soviet",
+    "cartoon_title": "Мама для мамонтёнка",
+    "song_title": "Колыбельная мамонтёнка",
+    "audio_file": "/audio/mama_dlya_mamontenka.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-008",
+    "category": "soviet",
+    "cartoon_title": "Приключения кота Леопольда",
+    "song_title": "Неприятность эту мы переживём",
+    "audio_file": "/audio/prikluchenia_kota_leopolda.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-009",
+    "category": "soviet",
+    "cartoon_title": "Трое из Простоквашино",
+    "song_title": "Кабы не было зимы",
+    "audio_file": "/audio/prostokvashino.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  },
+  {
+    "id": "song-010",
+    "category": "soviet",
+    "cartoon_title": "Трям! Здравствуйте!",
+    "song_title": "Облака",
+    "audio_file": "/audio/tryam_zdravstvuite.mp3",
+    "start_time": 0,
+    "end_time": 10,
+    "duration": 10
+  }
+]
