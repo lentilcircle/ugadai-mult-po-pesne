@@ -36,7 +36,9 @@ export function ResultsScreen({ teams, onReplay, onMenu }: ResultsScreenProps) {
       <p className="kicker">Итог партии</p>
       <div className="winner-block">
         <Trophy />
-        <p className="place-label">{sharedWin ? '1 место · ничья' : '1 место'}</p>
+        <p className="place-label">
+          {teams.length === 1 ? 'Ваш результат' : sharedWin ? '1 место · ничья' : '1 место'}
+        </p>
         <div className={sharedWin ? 'winner-names are-shared' : 'winner-names'}>
           {winners.teams.map((team) => (
             <h2 key={team.id} style={{ borderColor: team.color }}>

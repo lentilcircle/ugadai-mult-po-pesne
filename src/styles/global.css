@@ -123,9 +123,10 @@ button:focus-visible, input:focus-visible {
 }
 
 .choice {
-  width: 72px;
+  min-width: 64px;
+  padding: 0 12px;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.5rem;
 }
 
 .choice.is-selected, .category.is-selected {
@@ -271,10 +272,19 @@ button:focus-visible, input:focus-visible {
 
 .game-bar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 3px solid var(--ink);
+}
+
+.game-bar-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 22px;
 }
 
 .game-bar p { margin: 0; }
@@ -282,6 +292,12 @@ button:focus-visible, input:focus-visible {
   font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 400;
+}
+
+.btn-compact {
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 0.85rem;
 }
 
 .game-layout {
@@ -292,6 +308,38 @@ button:focus-visible, input:focus-visible {
 }
 
 .game-stage, .scoreboard { display: flex; flex-direction: column; gap: 14px; }
+
+.score-hint {
+  padding: 12px 14px;
+  border: 2px solid var(--mustard);
+  background: #fdf6e2;
+  animation: tick 0.3s ease;
+}
+
+.score-hint.is-awarded {
+  border-color: var(--green);
+  background: #edf5ef;
+}
+
+.score-hint-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+
+.score-hint.is-awarded .score-hint-label {
+  color: var(--green);
+}
+
+.score-hint p {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
 
 .player, .answer, .score-card, .place-row {
   border: 2px solid var(--ink);
@@ -360,6 +408,36 @@ button:focus-visible, input:focus-visible {
 .score-card .btn, .score-wait { width: 100%; margin-top: 8px; }
 
 .score-card .swatch { align-self: stretch; }
+
+.btn-no-guess {
+  width: 100%;
+  min-height: 58px;
+  font-size: 0.98rem;
+  border-style: dashed;
+}
+
+.no-guess-card {
+  padding: 10px 12px;
+  border-style: dashed;
+}
+
+.no-guess-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.no-guess-row span {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.no-guess-row .btn {
+  width: auto;
+  margin-top: 0;
+  min-height: 44px;
+}
 
 .game-actions {
   position: sticky;
@@ -452,13 +530,59 @@ button:focus-visible, input:focus-visible {
 
 .results-actions .btn { flex: 1; }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(56, 45, 38, 0.58);
+}
+
+.modal-dialog {
+  width: min(460px, 100%);
+  padding: 22px;
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  outline: 1px solid var(--ink);
+  outline-offset: 6px;
+  animation: tick 0.22s ease;
+}
+
+.modal-dialog h2 {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.2vw, 1.9rem);
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.modal-copy {
+  margin: 12px 0 0;
+  font-size: 0.98rem;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn {
+  flex: 1 1 160px;
+}
+
 @media (max-width: 860px) {
   .stage { width: min(100% - 16px, 1120px); margin: 10px auto 16px; padding: 14px; outline-offset: 4px; }
   .menu-grid, .game-layout, .game-actions, .category-list { grid-template-columns: 1fr; }
-  .game-bar { align-items: flex-end; }
+  .game-bar { align-items: center; }
   .winner-names h2 { font-size: clamp(2rem, 12vw, 3.2rem); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .countdown-value, .answer h2, .points, .trophy, .confetti i { animation: none; }
+  .countdown-value, .answer h2, .points, .trophy, .confetti i, .score-hint, .modal-dialog { animation: none; }
 }

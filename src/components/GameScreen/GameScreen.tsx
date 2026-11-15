@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { Song, Team } from '../../types/game';
 import { useAudioClip } from '../../hooks/useAudioClip';
 import { AudioPlayer } from '../AudioPlayer/AudioPlayer';
@@ -11,10 +11,14 @@ interface GameScreenProps {
   teams: Team[];
   revealed: boolean;
   awardedTeamId: string | null;
+  noOneGuessed: boolean;
   onReveal: () => void;
   onAward: (teamId: string) => void;
   onUndo: () => void;
+  onNoGuess: () => void;
+  onUndoNoGuess: () => void;
   onNext: () => void;
+  onExitToMenu: () => void;
 }
 
 export function GameScreen({
@@ -24,25 +28,57 @@ export function GameScreen({
   teams,
   revealed,
   awardedTeamId,
+  noOneGuessed,
   onReveal,
   onAward,
   onUndo,
+  onNoGuess,
+  onUndoNoGuess,
   onNext,
+  onExitToMenu,
 }: GameScreenProps) {
   const clip = useAudioClip(song);
   const fragment = Math.max(0, song.end_time - song.start_time);
+  const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const roundResolved = Boolean(awardedTeamId) || noOneGuessed;
 
   useEffect(() => {
     if (revealed) clip.halt();
   }, [clip.halt, revealed, song.id]);
 
+  useEffect(() => {
+    if (!confirmExitOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setConfirmExitOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [confirmExitOpen]);
+
+  const handleConfirmExit = () => {
+    clip.halt();
+    setConfirmExitOpen(false);
+    onExitToMenu();
+  };
+
   return (
     <section className="screen game-screen">
       <header className="game-bar">
-        <p>
-          Песня <strong>{questionNumber}</strong> из {questionTotal}
-        </p>
-        <p>Вопрос {questionNumber}</p>
+        <div className="game-bar-meta">
+          <p>
+            Песня <strong>{questionNumber}</strong> из {questionTotal}
+          </p>
+          <p>Вопрос {questionNumber}</p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-secondary btn-compact"
+          onClick={() => setConfirmExitOpen(true)}
+        >
+          В меню
+        </button>
       </header>
 
       <div className="game-layout">
@@ -70,16 +106,58 @@ export function GameScreen({
         </div>
 
         <aside className="scoreboard" aria-label="Счёт команд">
+          {revealed ? (
+            <div
+              className={roundResolved ? 'score-hint is-awarded' : 'score-hint'}
+              role="status"
+              aria-live="polite"
+            >
+              <span className="score-hint-label">Подсказка</span>
+              <p>
+                {awardedTeamId
+                  ? 'Балл начислен! Нажмите «Далее», чтобы перейти к следующему вопросу.'
+                  : noOneGuessed
+                    ? 'Баллы не начислены. Нажмите «Далее», чтобы перейти к следующему вопросу.'
+                    : teams.length === 1
+                      ? 'Теперь нажмите «+1 балл», если угадали, или «Не угадал», чтобы открыть кнопку «Далее».'
+                      : 'Теперь выберите команду и нажмите «+1 балл» или нажмите «Никто не угадал», чтобы открыть кнопку «Далее».'}
+              </p>
+            </div>
+          ) : null}
+
           {teams.map((team) => (
             <TeamScore
               key={team.id}
               team={team}
               revealed={revealed}
               awardedTeamId={awardedTeamId}
+              noOneGuessed={noOneGuessed}
               onAward={onAward}
               onUndo={onUndo}
             />
           ))}
+
+          {revealed ? (
+            noOneGuessed ? (
+              <div className="score-card no-guess-card is-selected">
+                <div className="no-guess-row">
+                  <span>{teams.length === 1 ? 'Не угадал' : 'Никто не угадал'}</span>
+                  <button type="button" className="btn btn-undo btn-compact" onClick={onUndoNoGuess}>
+                    Отменить
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-secondary btn-no-guess"
+                disabled={Boolean(awardedTeamId)}
+                onClick={onNoGuess}
+              >
+                {teams.length === 1 ? 'Не угадал' : 'Никто не угадал'}
+              </button>
+            )
+          ) : null}
         </aside>
       </div>
 
@@ -87,10 +165,46 @@ export function GameScreen({
         <button type="button" className="btn btn-secondary" onClick={onReveal} disabled={revealed}>
           {revealed ? 'Ответ открыт' : 'Показать результат'}
         </button>
-        <button type="button" className="btn btn-primary" onClick={onNext} disabled={!revealed}>
+        <button type="button" className="btn btn-primary" onClick={onNext} disabled={!roundResolved}>
           Далее
         </button>
       </div>
+
+      {confirmExitOpen ? (
+        <div
+          className="modal-backdrop"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setConfirmExitOpen(false);
+            }
+          }}
+        >
+          <div
+            className="modal-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="exit-dialog-title"
+          >
+            <p className="kicker">Выход из игры</p>
+            <h2 id="exit-dialog-title">Вы уверены, что хотите вернуться в главное меню?</h2>
+            <p className="modal-copy">
+              Текущая партия остановится, а набранный счёт команд будет сброшен.
+            </p>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-secondary" onClick={handleConfirmExit}>
+                Выйти в меню
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setConfirmExitOpen(false)}
+              >
+                Остаться
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -4,13 +4,21 @@ interface TeamScoreProps {
   team: Team;
   revealed: boolean;
   awardedTeamId: string | null;
+  noOneGuessed: boolean;
   onAward: (teamId: string) => void;
   onUndo: () => void;
 }
 
-export function TeamScore({ team, revealed, awardedTeamId, onAward, onUndo }: TeamScoreProps) {
+export function TeamScore({
+  team,
+  revealed,
+  awardedTeamId,
+  noOneGuessed,
+  onAward,
+  onUndo,
+}: TeamScoreProps) {
   const awarded = awardedTeamId === team.id;
-  const blocked = Boolean(awardedTeamId) && !awarded;
+  const blocked = (Boolean(awardedTeamId) || noOneGuessed) && !awarded;
 
   return (
     <article className="score-card" style={{ borderColor: team.color }}>

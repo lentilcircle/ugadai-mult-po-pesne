@@ -15,5 +15,4 @@ export const CATEGORIES: CategoryOption[] = [
   { id: 'other', label: 'Другие мультфильмы', available: false },
 ];
 
-export const TEAM_COUNTS = [2, 3, 4] as const;
-export const SONG_COUNTS = [1, 2, 3] as const;
+export const TEAM_COUNTS = [1, 2, 3, 4] as const;

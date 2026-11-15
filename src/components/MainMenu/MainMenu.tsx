@@ -1,4 +1,4 @@
-import { CATEGORIES, SONG_COUNTS, TEAM_COUNTS, TEAM_PRESETS } from '../../data/catalog';
+import { CATEGORIES, TEAM_COUNTS, TEAM_PRESETS } from '../../data/catalog';
 import type { GameSettings } from '../../types/game';
 import { songsInCategory } from '../../utils/songs';
 import songs from '../../data/songs.json';
@@ -15,7 +15,9 @@ const catalog = songs as Song[];
 
 export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) {
   const available = songsInCategory(catalog, settings.category).length;
+  const songCounts = Array.from({ length: available }, (_, index) => index + 1);
   const visibleTeams = TEAM_PRESETS.slice(0, settings.teamCount);
+  const isSolo = settings.teamCount === 1;
 
   return (
     <section className="screen menu-screen">
@@ -40,18 +42,24 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
                 key={count}
                 type="button"
                 className={settings.teamCount === count ? 'choice is-selected' : 'choice'}
+                aria-label={count === 1 ? '1 — соло-игра' : `${count} команды`}
                 onClick={() => onChange({ teamCount: count })}
               >
                 {count}
               </button>
             ))}
           </div>
+          <p className="hint">
+            {isSolo
+              ? 'Соло-режим: игра для одного участника.'
+              : `Командная игра: ${settings.teamCount} ${teamWord(settings.teamCount)}.`}
+          </p>
         </fieldset>
 
         <fieldset className="setting">
           <legend>Количество песен</legend>
           <div className="choice-row">
-            {SONG_COUNTS.map((count) => (
+            {songCounts.map((count) => (
               <button
                 key={count}
                 type="button"
@@ -81,7 +89,12 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
                   ].filter(Boolean).join(' ')}
                   disabled={!category.available}
                   aria-pressed={category.available ? selected : undefined}
-                  onClick={() => onChange({ category: category.id })}
+                  onClick={() => {
+                    const nextAvailable = songsInCategory(catalog, category.id).length;
+                    const clampedCount =
+                      nextAvailable > 0 ? Math.min(settings.songCount, nextAvailable) : settings.songCount;
+                    onChange({ category: category.id, songCount: clampedCount });
+                  }}
                 >
                   <span>{category.label}</span>
                   {category.available ? <em>открыта</em> : <em>недоступно</em>}
@@ -92,7 +105,7 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
         </fieldset>
 
         <fieldset className="setting setting-wide">
-          <legend>Названия команд</legend>
+          <legend>{isSolo ? 'Имя игрока' : 'Названия команд'}</legend>
           <div className="team-names">
             {visibleTeams.map((preset, index) => (
               <label key={preset.id} className="team-name" style={{ borderColor: preset.color }}>
@@ -100,7 +113,7 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
                 <input
                   value={settings.teamNames[index] ?? ''}
                   maxLength={24}
-                  aria-label={`Название команды ${index + 1}`}
+                  aria-label={isSolo ? 'Имя игрока' : `Название команды ${index + 1}`}
                   onChange={(event) => {
                     const teamNames = [...settings.teamNames];
                     teamNames[index] = event.target.value;
@@ -120,6 +133,12 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
       </button>
     </section>
   );
+}
+
+function teamWord(count: number): string {
+  if (count === 1) return 'команда';
+  if (count >= 2 && count <= 4) return 'команды';
+  return 'команд';
 }
 
 function songWord(count: number): string {

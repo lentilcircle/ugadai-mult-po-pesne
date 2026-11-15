@@ -22,8 +22,8 @@ export interface Team {
 }
 
 export interface GameSettings {
-  teamCount: 2 | 3 | 4;
-  songCount: 1 | 2 | 3;
+  teamCount: 1 | 2 | 3 | 4;
+  songCount: number;
   category: CategoryId;
   teamNames: string[];
 }

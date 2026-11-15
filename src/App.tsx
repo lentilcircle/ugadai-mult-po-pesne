@@ -19,8 +19,10 @@ export default function App() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [awardedTeamId, setAwardedTeamId] = useState<string | null>(null);
+  const [noOneGuessed, setNoOneGuessed] = useState(false);
   const [menuError, setMenuError] = useState<string | null>(null);
   const awardedRef = useRef<string | null>(null);
+  const noGuessRef = useRef(false);
 
   const beginRound = useCallback((nextSettings: GameSettings, nextTeams: Team[]) => {
     const playlistNext = buildPlaylist(songs, nextSettings.category, nextSettings.songCount);
@@ -34,7 +36,9 @@ export default function App() {
     setQuestionIndex(0);
     setRevealed(false);
     awardedRef.current = null;
+    noGuessRef.current = false;
     setAwardedTeamId(null);
+    setNoOneGuessed(false);
     setMenuError(null);
     setScreen('countdown');
   }, []);
@@ -67,7 +71,7 @@ export default function App() {
   }, []);
 
   const award = useCallback((teamId: string) => {
-    if (!revealed || awardedRef.current) return;
+    if (!revealed || awardedRef.current || noGuessRef.current) return;
     awardedRef.current = teamId;
     setAwardedTeamId(teamId);
     setTeams((current) =>
@@ -87,8 +91,20 @@ export default function App() {
     );
   }, []);
 
+  const markNoGuess = useCallback(() => {
+    if (!revealed || awardedRef.current || noGuessRef.current) return;
+    noGuessRef.current = true;
+    setNoOneGuessed(true);
+  }, [revealed]);
+
+  const undoNoGuess = useCallback(() => {
+    if (!noGuessRef.current) return;
+    noGuessRef.current = false;
+    setNoOneGuessed(false);
+  }, []);
+
   const nextQuestion = useCallback(() => {
-    if (!revealed) return;
+    if (!revealed || (!awardedRef.current && !noGuessRef.current)) return;
     if (questionIndex + 1 >= playlist.length) {
       setScreen('results');
       return;
@@ -96,12 +112,23 @@ export default function App() {
     setQuestionIndex((index) => index + 1);
     setRevealed(false);
     awardedRef.current = null;
+    noGuessRef.current = false;
     setAwardedTeamId(null);
+    setNoOneGuessed(false);
   }, [playlist.length, questionIndex, revealed]);
 
   const playAgain = useCallback(() => {
     beginRound(settings, teams);
   }, [beginRound, settings, teams]);
+
+  const exitToMenu = useCallback(() => {
+    setRevealed(false);
+    awardedRef.current = null;
+    noGuessRef.current = false;
+    setAwardedTeamId(null);
+    setNoOneGuessed(false);
+    setScreen('menu');
+  }, []);
 
   const currentSong = playlist[questionIndex];
 
@@ -128,10 +155,14 @@ export default function App() {
           teams={teams}
           revealed={revealed}
           awardedTeamId={awardedTeamId}
+          noOneGuessed={noOneGuessed}
           onReveal={reveal}
           onAward={award}
           onUndo={undo}
+          onNoGuess={markNoGuess}
+          onUndoNoGuess={undoNoGuess}
           onNext={nextQuestion}
+          onExitToMenu={exitToMenu}
         />
       ) : null}
       {screen === 'results' ? (

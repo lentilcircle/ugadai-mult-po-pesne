@@ -16,6 +16,9 @@ export function validateSettings(settings: GameSettings, availableSongs: number)
   if (names.some((name) => name.length > 24)) {
     return 'Название команды должно быть не длиннее 24 символов.';
   }
+  if (settings.songCount < 1) {
+    return 'Выберите хотя бы одну песню для игры.';
+  }
   if (availableSongs < settings.songCount) {
     return `В этой категории недостаточно песен: есть ${availableSongs}, для игры нужно ${settings.songCount}.`;
   }
