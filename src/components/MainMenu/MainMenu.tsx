@@ -1,8 +1,7 @@
 import { CATEGORIES, TEAM_COUNTS, TEAM_PRESETS } from '../../data/catalog';
-import type { GameSettings } from '../../types/game';
-import { songsInCategory } from '../../utils/songs';
+import type { CategoryId, GameSettings, SongEntry } from '../../types/game';
+import { normalizeSongs, songsInCategory } from '../../utils/songs';
 import songs from '../../data/songs.json';
-import type { Song } from '../../types/game';
 
 interface MainMenuProps {
   settings: GameSettings;
@@ -11,7 +10,12 @@ interface MainMenuProps {
   onStart: () => void;
 }
 
-const catalog = songs as Song[];
+const catalog = normalizeSongs(songs as SongEntry[]);
+const knownCategoryIds = new Set<string>(CATEGORIES.map((category) => category.id));
+const extraCategories = Array.from(
+  new Set(catalog.map((song) => song.category).filter((category) => !knownCategoryIds.has(category))),
+).map((id) => ({ id: id as CategoryId, label: id, available: true }));
+const allCategories = [...CATEGORIES, ...extraCategories];
 
 export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) {
   const available = songsInCategory(catalog, settings.category).length;
@@ -76,7 +80,9 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
         <fieldset className="setting setting-wide">
           <legend>Категория мультфильмов</legend>
           <div className="category-list">
-            {CATEGORIES.map((category) => {
+            {allCategories.map((category) => {
+              const count = songsInCategory(catalog, category.id).length;
+              const categoryAvailable = count > 0;
               const selected = settings.category === category.id;
               return (
                 <button
@@ -85,19 +91,18 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
                   className={[
                     'category',
                     selected ? 'is-selected' : '',
-                    category.available ? '' : 'is-locked',
+                    categoryAvailable ? '' : 'is-locked',
                   ].filter(Boolean).join(' ')}
-                  disabled={!category.available}
-                  aria-pressed={category.available ? selected : undefined}
+                  disabled={!categoryAvailable}
+                  aria-pressed={categoryAvailable ? selected : undefined}
                   onClick={() => {
-                    const nextAvailable = songsInCategory(catalog, category.id).length;
                     const clampedCount =
-                      nextAvailable > 0 ? Math.min(settings.songCount, nextAvailable) : settings.songCount;
+                      count > 0 ? Math.min(Math.max(1, settings.songCount), count) : settings.songCount;
                     onChange({ category: category.id, songCount: clampedCount });
                   }}
                 >
                   <span>{category.label}</span>
-                  {category.available ? <em>открыта</em> : <em>недоступно</em>}
+                  {categoryAvailable ? <em>{count} {songWord(count)}</em> : <em>недоступно</em>}
                 </button>
               );
             })}

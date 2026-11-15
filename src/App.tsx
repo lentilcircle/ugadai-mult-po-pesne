@@ -5,11 +5,11 @@ import { GameScreen } from './components/GameScreen/GameScreen';
 import { ResultsScreen } from './components/ResultsScreen/ResultsScreen';
 import { TEAM_PRESETS } from './data/catalog';
 import songsData from './data/songs.json';
-import type { GameSettings, Screen, Song, Team } from './types/game';
+import type { GameSettings, Screen, Song, SongEntry, Team } from './types/game';
 import { DEFAULT_SETTINGS, validateSettings } from './utils/settings';
-import { buildPlaylist, songsInCategory } from './utils/songs';
+import { buildPlaylist, normalizeSongs, songsInCategory } from './utils/songs';
 
-const songs = songsData as Song[];
+const songs = normalizeSongs(songsData as SongEntry[]);
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');

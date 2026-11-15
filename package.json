@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync-songs": "node scripts/sync-songs.mjs"
   },
   "dependencies": {
     "@fontsource/manrope": "^5.2.6",

@@ -7,16 +7,20 @@ export interface AudioClipController {
   status: PlaybackStatus;
   error: string | null;
   progress: number;
+  duration: number;
   toggle: () => void;
   replay: () => void;
   halt: () => void;
 }
 
-function clipBounds(song: Song, maxDuration?: number): { start: number; end: number } {
-  const start = Math.max(0, song.start_time);
-  const naturalEnd = Math.max(start, song.end_time);
-  const end = maxDuration !== undefined ? Math.min(naturalEnd, start + maxDuration) : naturalEnd;
-  return { start, end };
+function defaultClipBounds(song: Song, targetDuration: number): { start: number; end: number } {
+  const start = typeof song.start_time === 'number' && Number.isFinite(song.start_time)
+    ? Math.max(0, song.start_time)
+    : 0;
+  const end = typeof song.end_time === 'number' && Number.isFinite(song.end_time)
+    ? Math.max(start, song.end_time)
+    : start + targetDuration;
+  return { start, end: Math.min(end, start + targetDuration) };
 }
 
 function waitForSeek(audio: HTMLAudioElement, time: number): Promise<void> {
@@ -40,11 +44,10 @@ function waitForSeek(audio: HTMLAudioElement, time: number): Promise<void> {
   });
 }
 
-export function useAudioClip(song: Song | null, maxDuration?: number): AudioClipController {
+export function useAudioClip(song: Song | null, targetDuration = 10): AudioClipController {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const songRef = useRef(song);
-  const maxDurationRef = useRef(maxDuration);
-  const boundsRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const boundsRef = useRef<{ start: number; end: number }>({ start: 0, end: targetDuration });
   const statusRef = useRef<PlaybackStatus>('loading');
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -52,9 +55,9 @@ export function useAudioClip(song: Song | null, maxDuration?: number): AudioClip
   const [status, setStatus] = useState<PlaybackStatus>('loading');
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(targetDuration);
 
   songRef.current = song;
-  maxDurationRef.current = maxDuration;
 
   const setPlaybackStatus = useCallback((next: PlaybackStatus) => {
     statusRef.current = next;
@@ -199,7 +202,9 @@ export function useAudioClip(song: Song | null, maxDuration?: number): AudioClip
     const audio = new Audio();
     audio.preload = 'auto';
     audioRef.current = audio;
-    boundsRef.current = clipBounds(song, maxDuration);
+    const initialBounds = defaultClipBounds(song, targetDuration);
+    boundsRef.current = initialBounds;
+    setDuration(Math.max(0, initialBounds.end - initialBounds.start));
     setError(null);
     setProgress(0);
     setPlaybackStatus('loading');
@@ -211,21 +216,36 @@ export function useAudioClip(song: Song | null, maxDuration?: number): AudioClip
         setPlaybackStatus('error');
         return;
       }
-      const baseStart = Math.max(0, song.start_time);
+
+      const hasStart = typeof song.start_time === 'number' && Number.isFinite(song.start_time);
+      const hasEnd = typeof song.end_time === 'number' && Number.isFinite(song.end_time);
+
+      let baseStart = hasStart ? Math.max(0, song.start_time!) : 0;
       if (baseStart >= audio.duration) {
         setError('Начало фрагмента указано за пределами аудиофайла. Проверьте start_time в songs.json.');
         setPlaybackStatus('error');
         return;
       }
-      const baseEnd = Math.min(Math.max(baseStart, song.end_time), audio.duration);
+
+      let baseEnd: number;
+      if (hasEnd) {
+        baseEnd = Math.min(Math.max(baseStart, song.end_time!), audio.duration);
+      } else if (hasStart) {
+        baseEnd = Math.min(audio.duration, baseStart + 10);
+      } else {
+        const edgeMargin = audio.duration > targetDuration + 10 ? 5 : 0;
+        baseStart = edgeMargin;
+        baseEnd = audio.duration - edgeMargin;
+      }
+
       let start = baseStart;
       let end = baseEnd;
 
-      if (maxDuration !== undefined && baseEnd - baseStart > maxDuration) {
-        const maxOffset = baseEnd - baseStart - maxDuration;
+      if (baseEnd - baseStart > targetDuration) {
+        const maxOffset = baseEnd - baseStart - targetDuration;
         const randomOffset = Math.round(Math.random() * maxOffset * 10) / 10;
         start = baseStart + randomOffset;
-        end = Math.min(baseEnd, start + maxDuration);
+        end = Math.min(baseEnd, start + targetDuration);
       }
 
       if (end - start < 0.2) {
@@ -235,6 +255,7 @@ export function useAudioClip(song: Song | null, maxDuration?: number): AudioClip
       }
 
       boundsRef.current = { start, end };
+      setDuration(end - start);
       try {
         audio.currentTime = Math.min(start, Math.max(0, audio.duration - 0.05));
       } catch {
@@ -271,7 +292,7 @@ export function useAudioClip(song: Song | null, maxDuration?: number): AudioClip
       audio.load();
       if (audioRef.current === audio) audioRef.current = null;
     };
-  }, [song, maxDuration, clearClocks, finishClip, setPlaybackStatus]);
+  }, [song, targetDuration, clearClocks, finishClip, setPlaybackStatus]);
 
-  return { status, error, progress, toggle, replay: () => void replay(), halt };
+  return { status, error, progress, duration, toggle, replay: () => void replay(), halt };
 }

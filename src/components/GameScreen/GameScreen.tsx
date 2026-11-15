@@ -41,9 +41,7 @@ export function GameScreen({
   onNext,
   onExitToMenu,
 }: GameScreenProps) {
-  const clip = useAudioClip(song, hardcore ? 1 : undefined);
-  const naturalFragment = Math.max(0, song.end_time - song.start_time);
-  const fragment = hardcore ? Math.min(1, naturalFragment) : naturalFragment;
+  const clip = useAudioClip(song, hardcore ? 1 : 10);
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const roundResolved = Boolean(awardedTeamId) || noOneGuessed;
@@ -105,7 +103,7 @@ export function GameScreen({
             status={clip.status}
             error={clip.error}
             progress={clip.progress}
-            duration={fragment}
+            duration={clip.duration}
             revealed={revealed}
             canReveal={hasStarted}
             onToggle={clip.toggle}

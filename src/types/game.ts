@@ -2,15 +2,26 @@ export type Screen = 'menu' | 'countdown' | 'game' | 'results';
 
 export type CategoryId = 'soviet' | 'russian' | 'jetix' | 'disney' | 'other';
 
+export interface SongEntry {
+  id?: string;
+  category: CategoryId | string;
+  cartoon_title: string;
+  song_title?: string;
+  audio_file: string;
+  start_time?: number;
+  end_time?: number;
+  duration?: number;
+}
+
 export interface Song {
   id: string;
   category: CategoryId | string;
   cartoon_title: string;
   song_title: string;
   audio_file: string;
-  start_time: number;
-  end_time: number;
-  duration: number;
+  start_time?: number;
+  end_time?: number;
+  duration?: number;
 }
 
 export interface Team {
