@@ -70,14 +70,18 @@ export default function App() {
     setRevealed(true);
   }, []);
 
+  const pointsPerAnswer = settings.hardcore ? 2 : 1;
+
   const award = useCallback((teamId: string) => {
     if (!revealed || awardedRef.current || noGuessRef.current) return;
     awardedRef.current = teamId;
     setAwardedTeamId(teamId);
     setTeams((current) =>
-      current.map((team) => (team.id === teamId ? { ...team, score: team.score + 1 } : team)),
+      current.map((team) =>
+        team.id === teamId ? { ...team, score: team.score + pointsPerAnswer } : team,
+      ),
     );
-  }, [revealed]);
+  }, [pointsPerAnswer, revealed]);
 
   const undo = useCallback(() => {
     const teamId = awardedRef.current;
@@ -86,10 +90,10 @@ export default function App() {
     setAwardedTeamId(null);
     setTeams((current) =>
       current.map((team) =>
-        team.id === teamId ? { ...team, score: Math.max(0, team.score - 1) } : team,
+        team.id === teamId ? { ...team, score: Math.max(0, team.score - pointsPerAnswer) } : team,
       ),
     );
-  }, []);
+  }, [pointsPerAnswer]);
 
   const markNoGuess = useCallback(() => {
     if (!revealed || awardedRef.current || noGuessRef.current) return;
@@ -156,6 +160,8 @@ export default function App() {
           revealed={revealed}
           awardedTeamId={awardedTeamId}
           noOneGuessed={noOneGuessed}
+          hardcore={settings.hardcore}
+          pointsPerAnswer={pointsPerAnswer}
           onReveal={reveal}
           onAward={award}
           onUndo={undo}

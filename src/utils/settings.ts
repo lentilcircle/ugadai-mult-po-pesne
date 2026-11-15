@@ -6,6 +6,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   songCount: 3,
   category: 'soviet',
   teamNames: TEAM_PRESETS.map((preset) => preset.name),
+  hardcore: false,
 };
 
 export function validateSettings(settings: GameSettings, availableSongs: number): string | null {

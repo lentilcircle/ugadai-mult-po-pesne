@@ -26,6 +26,7 @@ export interface GameSettings {
   songCount: number;
   category: CategoryId;
   teamNames: string[];
+  hardcore: boolean;
 }
 
 export interface TeamPreset {

@@ -12,6 +12,8 @@ interface GameScreenProps {
   revealed: boolean;
   awardedTeamId: string | null;
   noOneGuessed: boolean;
+  hardcore: boolean;
+  pointsPerAnswer: number;
   onReveal: () => void;
   onAward: (teamId: string) => void;
   onUndo: () => void;
@@ -29,6 +31,8 @@ export function GameScreen({
   revealed,
   awardedTeamId,
   noOneGuessed,
+  hardcore,
+  pointsPerAnswer,
   onReveal,
   onAward,
   onUndo,
@@ -37,10 +41,23 @@ export function GameScreen({
   onNext,
   onExitToMenu,
 }: GameScreenProps) {
-  const clip = useAudioClip(song);
-  const fragment = Math.max(0, song.end_time - song.start_time);
+  const clip = useAudioClip(song, hardcore ? 1 : undefined);
+  const naturalFragment = Math.max(0, song.end_time - song.start_time);
+  const fragment = hardcore ? Math.min(1, naturalFragment) : naturalFragment;
   const [confirmExitOpen, setConfirmExitOpen] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const roundResolved = Boolean(awardedTeamId) || noOneGuessed;
+  const pointLabel = `+${pointsPerAnswer} ${pointsPerAnswer === 1 ? 'балл' : 'балла'}`;
+
+  useEffect(() => {
+    setHasStarted(false);
+  }, [song.id]);
+
+  useEffect(() => {
+    if (clip.status === 'playing') {
+      setHasStarted(true);
+    }
+  }, [clip.status]);
 
   useEffect(() => {
     if (revealed) clip.halt();
@@ -71,6 +88,7 @@ export function GameScreen({
             Песня <strong>{questionNumber}</strong> из {questionTotal}
           </p>
           <p>Вопрос {questionNumber}</p>
+          {hardcore ? <span className="hardcore-badge">HARDCORE · 1 СЕК · {pointLabel}</span> : null}
         </div>
         <button
           type="button"
@@ -88,8 +106,11 @@ export function GameScreen({
             error={clip.error}
             progress={clip.progress}
             duration={fragment}
+            revealed={revealed}
+            canReveal={hasStarted}
             onToggle={clip.toggle}
             onReplay={clip.replay}
+            onReveal={onReveal}
           />
 
           <div className={revealed ? 'answer is-open' : 'answer'} aria-live="polite">
@@ -115,12 +136,12 @@ export function GameScreen({
               <span className="score-hint-label">Подсказка</span>
               <p>
                 {awardedTeamId
-                  ? 'Балл начислен! Нажмите «Далее», чтобы перейти к следующему вопросу.'
+                  ? `Начислено ${pointLabel}! Нажмите «Далее», чтобы перейти к следующему вопросу.`
                   : noOneGuessed
                     ? 'Баллы не начислены. Нажмите «Далее», чтобы перейти к следующему вопросу.'
                     : teams.length === 1
-                      ? 'Теперь нажмите «+1 балл», если угадали, или «Не угадал», чтобы открыть кнопку «Далее».'
-                      : 'Теперь выберите команду и нажмите «+1 балл» или нажмите «Никто не угадал», чтобы открыть кнопку «Далее».'}
+                      ? `Теперь нажмите «${pointLabel}», если угадали, или «Не угадал», чтобы открыть кнопку «Далее».`
+                      : `Теперь выберите команду и нажмите «${pointLabel}» или нажмите «Никто не угадал», чтобы открыть кнопку «Далее».`}
               </p>
             </div>
           ) : null}
@@ -132,6 +153,7 @@ export function GameScreen({
               revealed={revealed}
               awardedTeamId={awardedTeamId}
               noOneGuessed={noOneGuessed}
+              pointsPerAnswer={pointsPerAnswer}
               onAward={onAward}
               onUndo={onUndo}
             />
@@ -162,9 +184,6 @@ export function GameScreen({
       </div>
 
       <div className="game-actions">
-        <button type="button" className="btn btn-secondary" onClick={onReveal} disabled={revealed}>
-          {revealed ? 'Ответ открыт' : 'Показать результат'}
-        </button>
         <button type="button" className="btn btn-primary" onClick={onNext} disabled={!roundResolved}>
           Далее
         </button>

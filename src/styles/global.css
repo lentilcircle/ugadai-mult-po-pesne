@@ -175,6 +175,88 @@ button:focus-visible, input:focus-visible {
 
 .category.is-locked em { color: var(--red); }
 
+.hardcore-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 2px solid var(--ink);
+  background: #f7f1e6;
+  text-align: left;
+}
+
+.hardcore-toggle:hover {
+  background: #e7dcc6;
+}
+
+.hardcore-toggle.is-active {
+  border-color: var(--red);
+  background: var(--red);
+  color: var(--cream);
+}
+
+.hardcore-toggle.is-active:hover {
+  background: #a63d31;
+}
+
+.hardcore-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hardcore-copy strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hardcore-copy span {
+  font-size: 0.88rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.hardcore-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 72px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.hardcore-toggle.is-active .hardcore-switch {
+  border-color: var(--cream);
+  background: var(--ink);
+  color: var(--mustard);
+}
+
+.hardcore-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 2px solid var(--red);
+  background: var(--red);
+  color: var(--cream);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .hint, .player-note, .score-wait {
   margin: 8px 0 0;
   color: var(--blue);
@@ -439,11 +521,18 @@ button:focus-visible, input:focus-visible {
   min-height: 44px;
 }
 
+.btn-reveal {
+  width: 100%;
+  min-height: 64px;
+  margin-top: 12px;
+  font-size: 1.05rem;
+}
+
 .game-actions {
   position: sticky;
   bottom: 10px;
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr;
+  grid-template-columns: 1fr;
   gap: 10px;
   padding: 10px 0 4px;
   background: var(--cream);

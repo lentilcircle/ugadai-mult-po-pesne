@@ -105,6 +105,29 @@ export function MainMenu({ settings, error, onChange, onStart }: MainMenuProps) 
         </fieldset>
 
         <fieldset className="setting setting-wide">
+          <legend>Режим хардкора</legend>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={settings.hardcore}
+            className={settings.hardcore ? 'hardcore-toggle is-active' : 'hardcore-toggle'}
+            onClick={() => onChange({ hardcore: !settings.hardcore })}
+          >
+            <span className="hardcore-copy">
+              <strong>HARDCORE MODE</strong>
+              <span>
+                {settings.hardcore
+                  ? 'Случайная 1 секунда музыки вместо 10 · +2 балла за ответ (+1 дополнительный)'
+                  : 'Включить: случайная 1 сек вместо 10 и +1 дополнительный балл за ответ'}
+              </span>
+            </span>
+            <span className="hardcore-switch" aria-hidden="true">
+              <span>{settings.hardcore ? 'ВКЛ' : 'ВЫКЛ'}</span>
+            </span>
+          </button>
+        </fieldset>
+
+        <fieldset className="setting setting-wide">
           <legend>{isSolo ? 'Имя игрока' : 'Названия команд'}</legend>
           <div className="team-names">
             {visibleTeams.map((preset, index) => (

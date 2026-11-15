@@ -5,6 +5,7 @@ interface TeamScoreProps {
   revealed: boolean;
   awardedTeamId: string | null;
   noOneGuessed: boolean;
+  pointsPerAnswer: number;
   onAward: (teamId: string) => void;
   onUndo: () => void;
 }
@@ -14,11 +15,13 @@ export function TeamScore({
   revealed,
   awardedTeamId,
   noOneGuessed,
+  pointsPerAnswer,
   onAward,
   onUndo,
 }: TeamScoreProps) {
   const awarded = awardedTeamId === team.id;
   const blocked = (Boolean(awardedTeamId) || noOneGuessed) && !awarded;
+  const pointLabel = `+${pointsPerAnswer} ${pointsPerAnswer === 1 ? 'балл' : 'балла'}`;
 
   return (
     <article className="score-card" style={{ borderColor: team.color }}>
@@ -42,7 +45,7 @@ export function TeamScore({
             disabled={blocked}
             onClick={() => onAward(team.id)}
           >
-            +1 балл
+            {pointLabel}
           </button>
         )
       ) : (

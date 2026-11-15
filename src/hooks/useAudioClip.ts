@@ -12,9 +12,10 @@ export interface AudioClipController {
   halt: () => void;
 }
 
-function clipBounds(song: Song): { start: number; end: number } {
+function clipBounds(song: Song, maxDuration?: number): { start: number; end: number } {
   const start = Math.max(0, song.start_time);
-  const end = Math.max(start, song.end_time);
+  const naturalEnd = Math.max(start, song.end_time);
+  const end = maxDuration !== undefined ? Math.min(naturalEnd, start + maxDuration) : naturalEnd;
   return { start, end };
 }
 
@@ -39,9 +40,11 @@ function waitForSeek(audio: HTMLAudioElement, time: number): Promise<void> {
   });
 }
 
-export function useAudioClip(song: Song | null): AudioClipController {
+export function useAudioClip(song: Song | null, maxDuration?: number): AudioClipController {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const songRef = useRef(song);
+  const maxDurationRef = useRef(maxDuration);
+  const boundsRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const statusRef = useRef<PlaybackStatus>('loading');
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<number | null>(null);
@@ -51,6 +54,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
   const [progress, setProgress] = useState(0);
 
   songRef.current = song;
+  maxDurationRef.current = maxDuration;
 
   const setPlaybackStatus = useCallback((next: PlaybackStatus) => {
     statusRef.current = next;
@@ -75,7 +79,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
     if (!audio || !current) return;
     if (statusRef.current === 'ended') return;
     audio.pause();
-    const { end } = clipBounds(current);
+    const { end } = boundsRef.current;
     if (Number.isFinite(audio.duration)) {
       try {
         audio.currentTime = Math.min(end, Math.max(0, audio.duration - 0.01));
@@ -93,7 +97,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
     const current = songRef.current;
     if (!audio || !current) return;
 
-    const { start, end } = clipBounds(current);
+    const { start, end } = boundsRef.current;
     const length = Math.max(0.05, end - start);
     const remaining = Math.max(0, (end - audio.currentTime) * 1000);
     timerRef.current = window.setTimeout(() => finishClip(), remaining + 40);
@@ -102,7 +106,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
       const live = audioRef.current;
       const liveSong = songRef.current;
       if (!live || !liveSong || live.paused || statusRef.current !== 'playing') return;
-      const bounds = clipBounds(liveSong);
+      const bounds = boundsRef.current;
       if (live.currentTime >= bounds.end - 0.02) {
         finishClip();
         return;
@@ -130,13 +134,12 @@ export function useAudioClip(song: Song | null): AudioClipController {
     if (!audio || !current) return;
     if (state === 'ended' || state === 'error' || state === 'loading' || state === 'playing') return;
 
-    const { end } = clipBounds(current);
+    const { start, end } = boundsRef.current;
     if (audio.currentTime >= end - 0.02) {
       finishClip();
       return;
     }
 
-    const { start } = clipBounds(current);
     if (audio.currentTime < start - 0.05) {
       await waitForSeek(audio, start);
     }
@@ -153,14 +156,6 @@ export function useAudioClip(song: Song | null): AudioClipController {
     }
   }, [clearClocks, finishClip, setPlaybackStatus, watchPlayback]);
 
-  const toggle = useCallback(() => {
-    if (statusRef.current === 'playing') {
-      halt();
-      return;
-    }
-    void playFromCurrent();
-  }, [halt, playFromCurrent]);
-
   const replay = useCallback(async () => {
     const audio = audioRef.current;
     const current = songRef.current;
@@ -169,7 +164,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
 
     clearClocks();
     audio.pause();
-    const { start } = clipBounds(current);
+    const { start } = boundsRef.current;
     setProgress(0);
     setPlaybackStatus('paused');
 
@@ -186,38 +181,64 @@ export function useAudioClip(song: Song | null): AudioClipController {
     }
   }, [clearClocks, setPlaybackStatus, watchPlayback]);
 
+  const toggle = useCallback(() => {
+    if (statusRef.current === 'playing') {
+      halt();
+      return;
+    }
+    if (statusRef.current === 'ended') {
+      void replay();
+      return;
+    }
+    void playFromCurrent();
+  }, [halt, playFromCurrent, replay]);
+
   useEffect(() => {
     if (!song) return;
 
     const audio = new Audio();
     audio.preload = 'auto';
     audioRef.current = audio;
+    boundsRef.current = clipBounds(song, maxDuration);
     setError(null);
     setProgress(0);
     setPlaybackStatus('loading');
 
     const onReady = () => {
       if (audioRef.current !== audio) return;
-      const { start, end } = clipBounds(song);
       if (!Number.isFinite(audio.duration) || audio.duration <= 0) {
         setError('Аудиофайл пустой или повреждён.');
         setPlaybackStatus('error');
         return;
       }
-      if (start >= audio.duration) {
+      const baseStart = Math.max(0, song.start_time);
+      if (baseStart >= audio.duration) {
         setError('Начало фрагмента указано за пределами аудиофайла. Проверьте start_time в songs.json.');
         setPlaybackStatus('error');
         return;
       }
-      try {
-        audio.currentTime = Math.min(start, Math.max(0, audio.duration - 0.05));
-      } catch {
-        /* Повторная установка произойдёт перед воспроизведением. */
+      const baseEnd = Math.min(Math.max(baseStart, song.end_time), audio.duration);
+      let start = baseStart;
+      let end = baseEnd;
+
+      if (maxDuration !== undefined && baseEnd - baseStart > maxDuration) {
+        const maxOffset = baseEnd - baseStart - maxDuration;
+        const randomOffset = Math.round(Math.random() * maxOffset * 10) / 10;
+        start = baseStart + randomOffset;
+        end = Math.min(baseEnd, start + maxDuration);
       }
+
       if (end - start < 0.2) {
         setError('Фрагмент слишком короткий. Проверьте границы в songs.json.');
         setPlaybackStatus('error');
         return;
+      }
+
+      boundsRef.current = { start, end };
+      try {
+        audio.currentTime = Math.min(start, Math.max(0, audio.duration - 0.05));
+      } catch {
+        /* Повторная установка произойдёт перед воспроизведением. */
       }
       setPlaybackStatus('ready');
     };
@@ -250,7 +271,7 @@ export function useAudioClip(song: Song | null): AudioClipController {
       audio.load();
       if (audioRef.current === audio) audioRef.current = null;
     };
-  }, [song, clearClocks, finishClip, setPlaybackStatus]);
+  }, [song, maxDuration, clearClocks, finishClip, setPlaybackStatus]);
 
   return { status, error, progress, toggle, replay: () => void replay(), halt };
 }
